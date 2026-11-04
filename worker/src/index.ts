@@ -288,6 +288,13 @@ export default {
       return new Response(null, { status: 204, headers: cors(env) });
     }
 
+    // APP_SECRET 設定時: /health と /sync 以外は Pages Function 経由（X-App-Secret）必須。
+    // 直叩き（素の読み書き）を拒否する。/sync は自前の X-Sync-Secret で守る。
+    if (env.APP_SECRET && pathname !== '/health' && pathname !== '/sync') {
+      const token = req.headers.get('X-App-Secret') ?? '';
+      if (!safeEqual(token, env.APP_SECRET)) return json({ error: 'unauthorized' }, env, 401);
+    }
+
     const seg = pathname.split('/').filter(Boolean).map((s) => decodeURIComponent(s));
     const m = req.method;
 

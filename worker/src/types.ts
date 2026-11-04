@@ -11,6 +11,9 @@ export interface Env {
   GEMINI_MODEL?: string;
   /** Google Routes API キー（移動時間）。未設定なら /routes は 503 */
   ROUTES_API_KEY?: string;
+  /** アプリ共有シークレット。設定時、/health と /sync 以外は X-App-Secret 必須
+   *  （Pages Function 経由のみ許可＝素の読み書きを拒否）。未設定なら従来どおり開放 */
+  APP_SECRET?: string;
 }
 
 /** パーサが生データから取り出す1件分 */
