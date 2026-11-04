@@ -23,6 +23,8 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // /api/* はSW(アプリ画面)に横取りさせず必ずネットワーク（＝Pages Function）へ
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             // 場所一覧はネットワーク優先・失敗時はキャッシュ（Phase3のオフライン布石）
