@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
-import { MarkerClusterer, type Marker } from '@googlemaps/markerclusterer';
 import type { Interest, Place } from '../types';
 import { BIG_CATEGORY_COLOR, colorForTags, type Vocabulary } from '../vocab';
 
@@ -30,6 +29,7 @@ interface Props {
   onBoundsChange?: (b: MapBounds) => void;
 }
 
+/** 個別ピン（クラスタなし） */
 function Markers({
   places,
   vocab,
@@ -38,15 +38,7 @@ function Markers({
   onSelect,
 }: Pick<Props, 'places' | 'vocab' | 'selectedId' | 'hoverId' | 'onSelect'>) {
   const map = useMap();
-  const [markers, setMarkers] = useState<Record<string, Marker>>({});
   const [zoom, setZoom] = useState<number>(6);
-  const clusterer = useMemo(() => (map ? new MarkerClusterer({ map }) : null), [map]);
-
-  useEffect(() => {
-    if (!clusterer) return;
-    clusterer.clearMarkers();
-    clusterer.addMarkers(Object.values(markers));
-  }, [clusterer, markers]);
 
   // ズーム追従（ラベル表示の判定に使う）
   useEffect(() => {
@@ -57,29 +49,7 @@ function Markers({
     return () => l.remove();
   }, [map]);
 
-  const setRef = useCallback((marker: Marker | null, key: string) => {
-    setMarkers((prev) => {
-      if ((marker && prev[key]) || (!marker && !prev[key])) return prev;
-      const next = { ...prev };
-      if (marker) next[key] = marker;
-      else delete next[key];
-      return next;
-    });
-  }, []);
-
-  const refCallbacks = useRef(new globalThis.Map<string, (m: Marker | null) => void>());
-  const getRef = useCallback(
-    (key: string) => {
-      let cb = refCallbacks.current.get(key);
-      if (!cb) {
-        cb = (m: Marker | null) => setRef(m, key);
-        refCallbacks.current.set(key, cb);
-      }
-      return cb;
-    },
-    [setRef]
-  );
-
+  // 選択された場所へパン
   useEffect(() => {
     if (!map || !selectedId) return;
     const p = places.find((x) => x.id === selectedId);
@@ -99,7 +69,6 @@ function Markers({
             <AdvancedMarker
               key={p.id}
               position={{ lat: p.lat!, lng: p.lng! }}
-              ref={getRef(p.id)}
               onClick={() => onSelect(p.id)}
               zIndex={active ? 10 : undefined}
               title={p.name}

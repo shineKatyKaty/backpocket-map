@@ -30,7 +30,8 @@ import MapErrorBoundary from './components/MapErrorBoundary';
 import DetailSheet from './components/DetailSheet';
 
 type SheetState = 'peek' | 'half' | 'full';
-const SHEET_CYCLE: Record<SheetState, SheetState> = { peek: 'half', half: 'full', full: 'peek' };
+// ハンドルの1タップで「縮む」向き（既定の half から1タップで peek=最小へ）
+const SHEET_CYCLE: Record<SheetState, SheetState> = { half: 'peek', peek: 'full', full: 'half' };
 const TRAVEL_TOP_N = 8;
 
 function withinBounds(p: PlaceWithDistance, b: MapBounds): boolean {
