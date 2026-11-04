@@ -29,9 +29,9 @@ import MapView, { type MapBounds } from './components/MapView';
 import MapErrorBoundary from './components/MapErrorBoundary';
 import DetailSheet from './components/DetailSheet';
 
-type SheetState = 'peek' | 'half' | 'full';
-// ハンドルの1タップで「縮む」向き（既定の half から1タップで peek=最小へ）
-const SHEET_CYCLE: Record<SheetState, SheetState> = { half: 'peek', peek: 'full', full: 'half' };
+type SheetState = 'peek' | 'half';
+// ハンドルで peek(最小) ↔ half をトグル
+const SHEET_CYCLE: Record<SheetState, SheetState> = { peek: 'half', half: 'peek' };
 const TRAVEL_TOP_N = 8;
 
 function withinBounds(p: PlaceWithDistance, b: MapBounds): boolean {

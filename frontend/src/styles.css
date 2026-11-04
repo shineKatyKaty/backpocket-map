@@ -595,9 +595,6 @@ body {
   .sheet-half {
     transform: translateY(45%);
   }
-  .sheet-full {
-    transform: translateY(0);
-  }
   .sheet-handle {
     display: block;
     width: 100%;
