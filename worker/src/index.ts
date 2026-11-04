@@ -24,7 +24,7 @@ const SEP = '\u001f'; // group_concat 区切り（名前と衝突しない制御
 
 function cors(env: Env): Record<string, string> {
   return {
-    'Access-Control-Allow-Origin': env.ALLOW_ORIGIN || '*',
+    'Access-Control-Allow-Origin': (env.ALLOW_ORIGIN || '*').replace(/\/+$/, ''),
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Sync-Secret, X-List-Id, X-List-Name, X-Share-Url',
     'Access-Control-Max-Age': '86400',
