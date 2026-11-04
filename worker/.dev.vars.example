@@ -1,3 +1,17 @@
 # ローカル開発用の秘密情報。コピーして worker/.dev.vars を作る（.dev.vars は .gitignore 済み）。
-# 本番は `wrangler secret put SYNC_SECRET` で登録する。
+# 本番は `wrangler secret put <NAME>` で登録する。
+# ここに書いた値は worker から env.<NAME> として参照する（コード側に鍵は書かない）。
+
+# ショートカット同期の共有シークレット
 SYNC_SECRET=change-me-to-a-long-random-string
+
+# Gemini API キー（Google AI Studio）。新規場所のタグ自動生成に使う。
+GEMINI_API_KEY=your-gemini-api-key
+# 使用モデル（任意）。未設定なら gemini-3.5-flash-lite
+# （gemini-2.0-flash-lite は提供終了。古い値が残っていたら消すか新モデルに）
+GEMINI_MODEL=gemini-3.5-flash-lite
+
+# Google Routes API 用キー（移動時間の算出に使う）。
+# Maps と同じプロジェクトのキーでよいが、サーバから呼ぶので
+# アプリ制限は「なし」または「IP制限」にし、Routes API を許可しておく。
+ROUTES_API_KEY=your-routes-api-key

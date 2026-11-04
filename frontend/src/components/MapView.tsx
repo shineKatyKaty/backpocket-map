@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   APIProvider,
   Map,
@@ -18,15 +18,28 @@ const INTEREST_COLOR: Record<Interest, string> = {
   低: '#9aa5b1',
 };
 
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 interface Props {
   places: Place[];
   selectedId: string | null;
   hoverId: string | null;
   onSelect: (id: string) => void;
+  origin: { lat: number; lng: number } | null;
+  onBoundsChange?: (b: MapBounds) => void;
 }
 
-/** クラスタ対応マーカー群（@vis.gl 公式レシピに準拠） */
-function Markers({ places, selectedId, hoverId, onSelect }: Props) {
+function Markers({
+  places,
+  selectedId,
+  hoverId,
+  onSelect,
+}: Pick<Props, 'places' | 'selectedId' | 'hoverId' | 'onSelect'>) {
   const map = useMap();
   const [markers, setMarkers] = useState<Record<string, Marker>>({});
   const clusterer = useMemo(() => (map ? new MarkerClusterer({ map }) : null), [map]);
@@ -47,7 +60,21 @@ function Markers({ places, selectedId, hoverId, onSelect }: Props) {
     });
   }, []);
 
-  // 選択された場所へパン
+  // キーごとに ref コールバックを安定化（インライン関数だと毎レンダリング
+  // 張り替わり、React が ref を null→node で呼び直して無限ループになる）。
+  const refCallbacks = useRef(new globalThis.Map<string, (m: Marker | null) => void>());
+  const getRef = useCallback(
+    (key: string) => {
+      let cb = refCallbacks.current.get(key);
+      if (!cb) {
+        cb = (m: Marker | null) => setRef(m, key);
+        refCallbacks.current.set(key, cb);
+      }
+      return cb;
+    },
+    [setRef]
+  );
+
   useEffect(() => {
     if (!map || !selectedId) return;
     const p = places.find((x) => x.id === selectedId);
@@ -65,7 +92,7 @@ function Markers({ places, selectedId, hoverId, onSelect }: Props) {
             <AdvancedMarker
               key={p.id}
               position={{ lat: p.lat!, lng: p.lng! }}
-              ref={(m) => setRef(m, p.id)}
+              ref={getRef(p.id)}
               onClick={() => onSelect(p.id)}
               zIndex={active ? 10 : undefined}
               title={p.name}
@@ -83,7 +110,7 @@ function Markers({ places, selectedId, hoverId, onSelect }: Props) {
   );
 }
 
-export default function MapView(props: Props) {
+export default function MapView({ places, selectedId, hoverId, onSelect, origin, onBoundsChange }: Props) {
   if (!API_KEY) {
     return (
       <div className="map-placeholder">
@@ -92,22 +119,28 @@ export default function MapView(props: Props) {
           <br />
           <code>VITE_GOOGLE_MAPS_API_KEY</code> を設定してください。
         </p>
-        <p className="muted">キー未設定でも、左のリストと検索はそのまま使えます。</p>
+        <p className="muted">キー未設定でも、リスト・検索・条件フィルタはそのまま使えます。</p>
       </div>
     );
   }
   return (
     <APIProvider apiKey={API_KEY}>
       <Map
-        defaultCenter={{ lat: 35.3, lng: 137.0 }}
-        defaultZoom={6}
+        defaultCenter={origin ?? { lat: 35.3, lng: 137.0 }}
+        defaultZoom={origin ? 12 : 6}
         mapId={MAP_ID}
         gestureHandling="greedy"
         clickableIcons={false}
         disableDefaultUI={false}
         style={{ width: '100%', height: '100%' }}
+        onBoundsChanged={(ev) => onBoundsChange?.(ev.detail.bounds)}
       >
-        <Markers {...props} />
+        <Markers places={places} selectedId={selectedId} hoverId={hoverId} onSelect={onSelect} />
+        {origin && (
+          <AdvancedMarker position={origin} title="現在地">
+            <div className="here-dot" />
+          </AdvancedMarker>
+        )}
       </Map>
     </APIProvider>
   );
