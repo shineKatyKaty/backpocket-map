@@ -8,14 +8,17 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "backpocket-map"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "105f41e2-799c-437c-84c4-90ec1f5ad5fc"
 migrations_dir = "migrations"
 
-# --- 変数（公開してよい設定） ---
+# --- 変数（公開してよい設定。秘密情報はここに書かない） ---
 [vars]
 # フロントエンド（Cloudflare Pages）のオリジン。CORS 許可に使う。
 # ローカル開発では Vite の http://localhost:5173 を許可。
-ALLOW_ORIGIN = "http://localhost:5173"
+# 本番デプロイ後、Pages の本番URL（https://<project>.pages.dev）に変更する。
+ALLOW_ORIGIN = "https://backpocket-map.pages.dev"
+# Gemini モデル名（秘密ではないのでここに置く）。API キーは secret。
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 
 # --- 秘密情報（コミットしない） ---
 # ショートカット同期の共有シークレット:

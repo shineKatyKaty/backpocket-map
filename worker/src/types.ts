@@ -16,12 +16,13 @@ export interface Env {
 /** パーサが生データから取り出す1件分 */
 export interface ParsedPlace {
   id: string; // CID "数値:数値"
-  cidNumber: string | null; // CID 後半（?cid= 用）
+  cidNumber: string | null; // CID 後半（?cid= 用。符号なし64bit）
   name: string;
   lat: number | null;
   lng: number | null;
   note: string | null;
-  placeId: string | null;
+  address: string | null; // リストに含まれる住所（空なら null）
+  placeId: string | null; // feature id（/g/… または ChIJ…）
   savedAt: number | null; // UNIX秒
   gmapsUrl: string;
   needsReview: boolean;
