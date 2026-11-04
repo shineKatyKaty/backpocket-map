@@ -170,7 +170,7 @@ curl https://backpocket-map-api.shinshinkaty.workers.dev/sync/last
    - Application domain / Public hostname：`backpocket-map.pages.dev`
 5. **ポリシー**：
    - Policy name：`myself`／Action：`Allow`
-   - Include：Selector **Emails** ＝ `shinshinkaty@gmail.com`
+   - Include：Selector **Emails** ＝ `あなたのメールアドレス`
 6. 残りはデフォルトで「次へ／保存」。
 7. 確認：シークレットウィンドウで `https://backpocket-map.pages.dev` を開く→Cloudflareの
    ログイン画面→メール入力→届いたコードを入力→アプリが開く。自分以外は弾かれる。
