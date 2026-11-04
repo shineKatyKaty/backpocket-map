@@ -8,15 +8,42 @@ const BASE = import.meta.env.VITE_API_BASE?.replace(/\/$/, '');
 /** バックエンドに接続しているか（サンプルモードなら編集はローカルのみ） */
 export const apiAvailable = !!BASE;
 
+/** 同一オリジン（/api …）か。Access 配下なのでセッション切れ時は再ログインへ飛ばす */
+const sameOrigin = !!BASE && BASE.startsWith('/');
+
 /**
- * 場所一覧を取得。VITE_API_BASE があれば Worker から、
- * 無い/失敗時はバンドルされたサンプルデータにフォールバックする。
+ * Access のセッション切れで /api がログインへ 302 された場合に再認証する。
+ * redirect:'manual' だと res.type==='opaqueredirect' になるのでそれを合図にリロード。
+ * PWAのキャッシュ殻で古い画面が残るのを避けつつ、無限ループを防ぐため間引く。
  */
+function reauth(): void {
+  if (!sameOrigin) return;
+  try {
+    const last = Number(sessionStorage.getItem('reauth_at') || '0');
+    if (Date.now() - last < 15000) return; // 15秒以内の連続リロードは抑止
+    sessionStorage.setItem('reauth_at', String(Date.now()));
+  } catch {
+    /* sessionStorage 不可でも続行 */
+  }
+  location.reload();
+}
+
+/** fetch ラッパー。Access ログインへのリダイレクトを検知して再認証。 */
+async function apiFetch(path: string, init?: RequestInit): Promise<Response | null> {
+  if (!BASE) return null;
+  const res = await fetch(`${BASE}${path}`, { ...init, redirect: 'manual' });
+  if (res.type === 'opaqueredirect' || res.status === 0) {
+    reauth();
+    return null;
+  }
+  return res;
+}
+
 export async function fetchPlaces(): Promise<{ places: Place[]; source: DataSource }> {
   if (BASE) {
     try {
-      const res = await fetch(`${BASE}/places`, { headers: { Accept: 'application/json' } });
-      if (res.ok) {
+      const res = await apiFetch('/places', { headers: { Accept: 'application/json' } });
+      if (res && res.ok) {
         const data = (await res.json()) as { places: Place[] };
         if (Array.isArray(data.places)) return { places: data.places, source: 'api' };
       }
@@ -27,12 +54,11 @@ export async function fetchPlaces(): Promise<{ places: Place[]; source: DataSour
   return { places: samplePlaces, source: 'sample' };
 }
 
-/** タグ語彙を取得。未接続/失敗時は既定語彙。 */
 export async function fetchVocab(): Promise<Vocabulary> {
   if (BASE) {
     try {
-      const res = await fetch(`${BASE}/tags`, { headers: { Accept: 'application/json' } });
-      if (res.ok) {
+      const res = await apiFetch('/tags', { headers: { Accept: 'application/json' } });
+      if (res && res.ok) {
         const data = (await res.json()) as { vocab?: Vocabulary };
         if (data.vocab?.bigs?.length) return data.vocab;
       }
@@ -49,34 +75,29 @@ export interface PlacePatch {
   visited?: boolean;
 }
 
-/** 興味度/所要時間/訪問済みの更新。未接続なら false（呼び出し側がローカル反映）。 */
 export async function patchPlace(id: string, patch: PlacePatch): Promise<boolean> {
-  if (!BASE) return false;
-  const res = await fetch(`${BASE}/places/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/places/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   });
-  return res.ok;
+  return !!res && res.ok;
 }
 
 export async function addTag(id: string, name: string): Promise<boolean> {
-  if (!BASE) return false;
-  const res = await fetch(`${BASE}/places/${encodeURIComponent(id)}/tags`, {
+  const res = await apiFetch(`/places/${encodeURIComponent(id)}/tags`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   });
-  return res.ok;
+  return !!res && res.ok;
 }
 
 export async function removeTag(id: string, name: string): Promise<boolean> {
-  if (!BASE) return false;
-  const res = await fetch(
-    `${BASE}/places/${encodeURIComponent(id)}/tags/${encodeURIComponent(name)}`,
-    { method: 'DELETE' }
-  );
-  return res.ok;
+  const res = await apiFetch(`/places/${encodeURIComponent(id)}/tags/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+  return !!res && res.ok;
 }
 
 export interface TravelResult {
@@ -84,7 +105,6 @@ export interface TravelResult {
   distanceMeters: number | null;
 }
 
-/** 現在地→候補地点の移動時間。未接続/失敗時は空（距離のみ表示）。 */
 export async function fetchTravelTimes(
   origin: { lat: number; lng: number },
   destinations: { id: string; lat: number; lng: number }[],
@@ -92,12 +112,12 @@ export async function fetchTravelTimes(
 ): Promise<Record<string, TravelResult>> {
   if (!BASE || destinations.length === 0) return {};
   try {
-    const res = await fetch(`${BASE}/routes`, {
+    const res = await apiFetch('/routes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ origin, destinations, mode }),
     });
-    if (!res.ok) return {};
+    if (!res || !res.ok) return {};
     const data = (await res.json()) as {
       results?: { id: string; durationSec: number | null; distanceMeters: number | null }[];
     };
