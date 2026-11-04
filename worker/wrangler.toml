@@ -1,0 +1,23 @@
+name = "backpocket-map-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# --- D1 (SQLite) ---
+# `wrangler d1 create backpocket-map` で発行される database_id をここに貼る。
+[[d1_databases]]
+binding = "DB"
+database_name = "backpocket-map"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# --- 変数（公開してよい設定） ---
+[vars]
+# フロントエンド（Cloudflare Pages）のオリジン。CORS 許可に使う。
+# ローカル開発では Vite の http://localhost:5173 を許可。
+ALLOW_ORIGIN = "http://localhost:5173"
+
+# --- 秘密情報（コミットしない） ---
+# ショートカット同期の共有シークレット:
+#   本番:  wrangler secret put SYNC_SECRET
+#   ローカル: worker/.dev.vars に SYNC_SECRET=... を書く（.gitignore 済み）

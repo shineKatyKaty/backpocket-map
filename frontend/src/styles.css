@@ -1,0 +1,363 @@
+:root {
+  --fg: #1f2630;
+  --muted: #6b7684;
+  --line: #e3e7ec;
+  --bg: #ffffff;
+  --accent: #4a6fa5;
+  --high: #e4572e;
+  --mid: #4a6fa5;
+  --low: #9aa5b1;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  --topbar-h: 112px;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+body {
+  font-family: system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---------- 上部: タイトル + 検索 ---------- */
+.topbar {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  z-index: 20;
+}
+.app-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.searchbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.search-row {
+  position: relative;
+}
+.search-input {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  font-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+}
+.search-input:focus {
+  border-color: var(--accent);
+}
+.clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: #f6f8fa;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--fg);
+}
+.chip.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- 本体: リスト + 地図 ---------- */
+.body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+.list-pane {
+  width: 380px;
+  flex: 0 0 380px;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sheet-handle {
+  display: none;
+}
+.list-scroll {
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+.map-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ---------- 結果リスト ---------- */
+.result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.result-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.result-row:hover {
+  background: #f6f8fa;
+}
+.result-row.selected {
+  background: #eef3fb;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+.row-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.row-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.interest-高 {
+  background: var(--high);
+}
+.interest-中 {
+  background: var(--mid);
+}
+.interest-低 {
+  background: var(--low);
+}
+.badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.badge.visited {
+  background: #e7f3ec;
+  color: #2f7d4f;
+}
+.badge.review {
+  background: #fdece9;
+  color: #b23b1e;
+}
+.badge.sample {
+  background: #fff3cd;
+  color: #8a6d00;
+  margin-left: 6px;
+}
+.empty {
+  padding: 24px 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- 地図プレースホルダ ---------- */
+.map-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--fg);
+  background: #f2f5f8;
+  padding: 24px;
+}
+.map-placeholder code {
+  background: #e3e7ec;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- 詳細シート ---------- */
+.detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.detail-sheet {
+  background: var(--bg);
+  width: min(480px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 14px;
+  padding: 18px 20px 22px;
+  box-shadow: var(--shadow);
+}
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.detail-head h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.detail-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.tag {
+  background: #eef3fb;
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.detail-list {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 6px 12px;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.detail-list dt {
+  color: var(--muted);
+}
+.detail-list dd {
+  margin: 0;
+}
+.detail-list dd.pre {
+  white-space: pre-wrap;
+}
+.gmaps-btn {
+  display: block;
+  text-align: center;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  padding: 11px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ---------- モバイル: 地図全画面 + ボトムシート ---------- */
+@media (max-width: 768px) {
+  :root {
+    --topbar-h: 108px;
+  }
+  .body {
+    display: block;
+  }
+  .map-pane {
+    position: absolute;
+    inset: 0;
+  }
+  .list-pane {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    flex: none;
+    height: calc(100% - var(--topbar-h));
+    background: var(--bg);
+    border-right: none;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: var(--shadow);
+    transition: transform 0.25s ease;
+    z-index: 10;
+  }
+  .sheet-peek {
+    transform: translateY(calc(100% - 64px));
+  }
+  .sheet-half {
+    transform: translateY(45%);
+  }
+  .sheet-full {
+    transform: translateY(0);
+  }
+  .sheet-handle {
+    display: block;
+    width: 44px;
+    height: 5px;
+    border: none;
+    border-radius: 3px;
+    background: #cfd6de;
+    margin: 10px auto 6px;
+    cursor: pointer;
+  }
+}

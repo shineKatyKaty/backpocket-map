@@ -1,0 +1,22 @@
+{
+  "name": "backpocket-map-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker: 保存リスト検索マップ の同期受け口と読み取りAPI (Phase 1)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply backpocket-map --local",
+    "migrate:remote": "wrangler d1 migrations apply backpocket-map --remote",
+    "seed:local": "wrangler d1 execute backpocket-map --local --file=./seed/sample.sql",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4",
+    "wrangler": "^3.84.0"
+  }
+}
