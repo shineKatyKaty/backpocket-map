@@ -4,6 +4,22 @@ export interface Vocabulary {
   smallsByBig: Record<string, string[]>;
 }
 
+/** 大カテゴリの色（ピンの色分け・凡例に使う） */
+export const BIG_CATEGORY_COLOR: Record<string, string> = {
+  飲食: '#e4572e', // オレンジ赤
+  ショップ: '#2a9d8f', // 緑
+  見学: '#4a6fa5', // 青
+  体験: '#9b5de5', // 紫
+  その他: '#9aa5b1', // グレー
+};
+export const DEFAULT_BIG_COLOR = '#9aa5b1';
+
+/** タグ配列から代表の大カテゴリ色を返す */
+export function colorForTags(vocab: Vocabulary, tags: string[]): string {
+  const big = placeBigs(vocab, tags)[0];
+  return (big && BIG_CATEGORY_COLOR[big]) || DEFAULT_BIG_COLOR;
+}
+
 /** 設計書「大カテゴリと初期の小カテゴリ」。サンプル/オフライン時のフォールバック。 */
 export const DEFAULT_VOCAB: Vocabulary = {
   bigs: ['飲食', 'ショップ', '見学', '体験', 'その他'],

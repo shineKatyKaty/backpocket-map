@@ -1,22 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  APIProvider,
-  Map,
-  AdvancedMarker,
-  Pin,
-  useMap,
-} from '@vis.gl/react-google-maps';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import { MarkerClusterer, type Marker } from '@googlemaps/markerclusterer';
 import type { Interest, Place } from '../types';
+import { BIG_CATEGORY_COLOR, colorForTags, type Vocabulary } from '../vocab';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
 
-const INTEREST_COLOR: Record<Interest, string> = {
-  高: '#e4572e',
-  中: '#4a6fa5',
-  低: '#9aa5b1',
-};
+/** 名前ラベルを常時出すズーム閾値（これ未満は選択/ホバー時のみ） */
+const LABEL_ZOOM = 14;
+
+/** 興味度 → ピンの大きさ */
+const INTEREST_SCALE: Record<Interest, number> = { 高: 1.25, 中: 1.0, 低: 0.82 };
 
 export interface MapBounds {
   north: number;
@@ -27,6 +22,7 @@ export interface MapBounds {
 
 interface Props {
   places: Place[];
+  vocab: Vocabulary;
   selectedId: string | null;
   hoverId: string | null;
   onSelect: (id: string) => void;
@@ -36,12 +32,14 @@ interface Props {
 
 function Markers({
   places,
+  vocab,
   selectedId,
   hoverId,
   onSelect,
-}: Pick<Props, 'places' | 'selectedId' | 'hoverId' | 'onSelect'>) {
+}: Pick<Props, 'places' | 'vocab' | 'selectedId' | 'hoverId' | 'onSelect'>) {
   const map = useMap();
   const [markers, setMarkers] = useState<Record<string, Marker>>({});
+  const [zoom, setZoom] = useState<number>(6);
   const clusterer = useMemo(() => (map ? new MarkerClusterer({ map }) : null), [map]);
 
   useEffect(() => {
@@ -49,6 +47,15 @@ function Markers({
     clusterer.clearMarkers();
     clusterer.addMarkers(Object.values(markers));
   }, [clusterer, markers]);
+
+  // ズーム追従（ラベル表示の判定に使う）
+  useEffect(() => {
+    if (!map) return;
+    const update = () => setZoom(map.getZoom() ?? 6);
+    update();
+    const l = map.addListener('zoom_changed', update);
+    return () => l.remove();
+  }, [map]);
 
   const setRef = useCallback((marker: Marker | null, key: string) => {
     setMarkers((prev) => {
@@ -60,8 +67,6 @@ function Markers({
     });
   }, []);
 
-  // キーごとに ref コールバックを安定化（インライン関数だと毎レンダリング
-  // 張り替わり、React が ref を null→node で呼び直して無限ループになる）。
   const refCallbacks = useRef(new globalThis.Map<string, (m: Marker | null) => void>());
   const getRef = useCallback(
     (key: string) => {
@@ -87,7 +92,9 @@ function Markers({
         .filter((p) => p.lat != null && p.lng != null)
         .map((p) => {
           const active = p.id === selectedId || p.id === hoverId;
-          const base = p.interest === '高' ? 1.3 : 1.0;
+          const color = colorForTags(vocab, p.tags);
+          const scale = INTEREST_SCALE[p.interest] ?? 1;
+          const showLabel = zoom >= LABEL_ZOOM || active;
           return (
             <AdvancedMarker
               key={p.id}
@@ -97,12 +104,13 @@ function Markers({
               zIndex={active ? 10 : undefined}
               title={p.name}
             >
-              <Pin
-                background={INTEREST_COLOR[p.interest]}
-                borderColor="#ffffff"
-                glyphColor="#ffffff"
-                scale={active ? base * 1.25 : base}
-              />
+              <div
+                className={`pin-wrap ${active ? 'is-active' : ''}`}
+                style={{ '--pin': color, '--s': String(scale) } as CSSProperties}
+              >
+                {showLabel && <div className="pin-label">{p.name}</div>}
+                <div className="pin-dot" />
+              </div>
             </AdvancedMarker>
           );
         })}
@@ -110,7 +118,29 @@ function Markers({
   );
 }
 
-export default function MapView({ places, selectedId, hoverId, onSelect, origin, onBoundsChange }: Props) {
+function Legend({ vocab }: { vocab: Vocabulary }) {
+  const bigs = vocab.bigs.filter((b) => BIG_CATEGORY_COLOR[b]);
+  return (
+    <div className="map-legend">
+      {bigs.map((b) => (
+        <span key={b} className="legend-item">
+          <span className="legend-dot" style={{ background: BIG_CATEGORY_COLOR[b] }} />
+          {b}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export default function MapView({
+  places,
+  vocab,
+  selectedId,
+  hoverId,
+  onSelect,
+  origin,
+  onBoundsChange,
+}: Props) {
   if (!API_KEY) {
     return (
       <div className="map-placeholder">
@@ -124,24 +154,33 @@ export default function MapView({ places, selectedId, hoverId, onSelect, origin,
     );
   }
   return (
-    <APIProvider apiKey={API_KEY}>
-      <Map
-        defaultCenter={origin ?? { lat: 35.3, lng: 137.0 }}
-        defaultZoom={origin ? 12 : 6}
-        mapId={MAP_ID}
-        gestureHandling="greedy"
-        clickableIcons={false}
-        disableDefaultUI={false}
-        style={{ width: '100%', height: '100%' }}
-        onBoundsChanged={(ev) => onBoundsChange?.(ev.detail.bounds)}
-      >
-        <Markers places={places} selectedId={selectedId} hoverId={hoverId} onSelect={onSelect} />
-        {origin && (
-          <AdvancedMarker position={origin} title="現在地">
-            <div className="here-dot" />
-          </AdvancedMarker>
-        )}
-      </Map>
-    </APIProvider>
+    <div className="map-wrap">
+      <APIProvider apiKey={API_KEY}>
+        <Map
+          defaultCenter={origin ?? { lat: 35.3, lng: 137.0 }}
+          defaultZoom={origin ? 12 : 6}
+          mapId={MAP_ID}
+          gestureHandling="greedy"
+          clickableIcons={false}
+          disableDefaultUI={false}
+          style={{ width: '100%', height: '100%' }}
+          onBoundsChanged={(ev) => onBoundsChange?.(ev.detail.bounds)}
+        >
+          <Markers
+            places={places}
+            vocab={vocab}
+            selectedId={selectedId}
+            hoverId={hoverId}
+            onSelect={onSelect}
+          />
+          {origin && (
+            <AdvancedMarker position={origin} title="現在地">
+              <div className="here-dot" />
+            </AdvancedMarker>
+          )}
+        </Map>
+      </APIProvider>
+      <Legend vocab={vocab} />
+    </div>
   );
 }

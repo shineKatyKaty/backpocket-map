@@ -26,6 +26,7 @@ import SearchBar from './components/SearchBar';
 import FilterBar from './components/FilterBar';
 import ResultList from './components/ResultList';
 import MapView, { type MapBounds } from './components/MapView';
+import MapErrorBoundary from './components/MapErrorBoundary';
 import DetailSheet from './components/DetailSheet';
 
 type SheetState = 'peek' | 'half' | 'full';
@@ -58,6 +59,9 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<SheetState>('half');
+  const [filtersOpen, setFiltersOpen] = useState<boolean>(
+    () => (typeof window !== 'undefined' ? window.innerWidth > 768 : true)
+  );
 
   const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null);
   const [travelMode, setTravelMode] = useState<TravelMode>('WALK');
@@ -147,6 +151,15 @@ export default function App() {
     return [...s];
   }, [places]);
 
+  const activeFilterCount =
+    filters.bigs.length +
+    (filters.interest !== 'all' ? 1 : 0) +
+    (filters.maxDuration != null ? 1 : 0) +
+    (filters.listName ? 1 : 0) +
+    (filters.excludeVisited ? 1 : 0) +
+    (filters.radiusKm != null ? 1 : 0) +
+    (boundsActive ? 1 : 0);
+
   const selected = useMemo(() => places.find((p) => p.id === selectedId) ?? null, [places, selectedId]);
   const selectedDist = useMemo(
     () => withDistance.find((p) => p.id === selectedId)?.distanceKm ?? null,
@@ -181,18 +194,31 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <h1 className="app-title">保存リスト検索マップ</h1>
-        <SearchBar query={query} onQuery={setQuery} count={results.length} total={places.length} source={source} />
-        <FilterBar
-          filters={filters}
-          onFilters={setFilters}
-          vocab={vocab}
-          lists={lists}
-          hasLocation={!!origin}
-          travelMode={travelMode}
-          onTravelMode={setTravelMode}
-          boundsActive={boundsActive}
-          onToggleBounds={() => setBoundsActive((v) => !v)}
-        />
+        <div className="search-line">
+          <SearchBar query={query} onQuery={setQuery} count={results.length} total={places.length} source={source} />
+          <button
+            className={`filter-toggle ${filtersOpen ? 'on' : ''}`}
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+          >
+            絞り込み
+            {activeFilterCount > 0 && <span className="ft-badge">{activeFilterCount}</span>}
+            <span className="ft-caret">{filtersOpen ? '▲' : '▼'}</span>
+          </button>
+        </div>
+        {filtersOpen && (
+          <FilterBar
+            filters={filters}
+            onFilters={setFilters}
+            vocab={vocab}
+            lists={lists}
+            hasLocation={!!origin}
+            travelMode={travelMode}
+            onTravelMode={setTravelMode}
+            boundsActive={boundsActive}
+            onToggleBounds={() => setBoundsActive((v) => !v)}
+          />
+        )}
       </header>
 
       <main className="body">
@@ -219,14 +245,24 @@ export default function App() {
         </aside>
 
         <section className="map-pane">
-          <MapView
-            places={results}
-            selectedId={selectedId}
-            hoverId={hoverId}
-            onSelect={onSelect}
-            origin={origin}
-            onBoundsChange={setMapBounds}
-          />
+          <MapErrorBoundary
+            fallback={
+              <div className="map-placeholder">
+                <p className="muted">地図を読み込めませんでした。</p>
+                <p className="muted">APIキーのリファラ設定（許可ドメイン）を確認してください。</p>
+              </div>
+            }
+          >
+            <MapView
+              places={results}
+              vocab={vocab}
+              selectedId={selectedId}
+              hoverId={hoverId}
+              onSelect={onSelect}
+              origin={origin}
+              onBoundsChange={setMapBounds}
+            />
+          </MapErrorBoundary>
         </section>
       </main>
 

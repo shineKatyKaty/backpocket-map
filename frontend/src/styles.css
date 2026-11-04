@@ -223,6 +223,124 @@ body {
   font-weight: 600;
 }
 
+/* ---------- 検索行＋フィルタ折りたたみ ---------- */
+.search-line {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.search-line .searchbar {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.filter-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f6f8fa;
+  color: var(--fg);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filter-toggle.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ft-badge {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ft-caret {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ---------- 地図ラッパ＋凡例 ---------- */
+.map-wrap {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+.map-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  max-width: 60%;
+  padding: 6px 9px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  font-size: 11px;
+  color: var(--fg);
+  pointer-events: none;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ---------- 地図ピン（名前ラベル＋大カテゴリ色） ---------- */
+.pin-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pin-label {
+  max-width: 128px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  padding: 1px 5px;
+  margin-bottom: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  background: var(--pin, #4a6fa5);
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg) scale(var(--s, 1));
+  transform-origin: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.pin-wrap.is-active .pin-dot {
+  outline: 2px solid var(--pin, #4a6fa5);
+  outline-offset: 1px;
+}
+
 /* ---------- 現在地マーカー ---------- */
 .here-dot {
   width: 16px;
@@ -471,7 +589,8 @@ body {
     z-index: 10;
   }
   .sheet-peek {
-    transform: translateY(calc(100% - 64px));
+    /* ハンドル＋1行だけ見える厚さ（地図をほぼ全面に） */
+    transform: translateY(calc(100% - 96px));
   }
   .sheet-half {
     transform: translateY(45%);
