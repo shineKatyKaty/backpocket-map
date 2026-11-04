@@ -89,12 +89,13 @@ export async function applySync(
         env.DB
           .prepare(
             `UPDATE places
-                SET name = ?, note = ?, gmaps_url = COALESCE(gmaps_url, ?),
+                SET name = ?, note = ?, address = COALESCE(address, ?),
+                    gmaps_url = COALESCE(gmaps_url, ?),
                     place_id = COALESCE(place_id, ?), saved_at = COALESCE(saved_at, ?),
                     archived = 0, updated_at = datetime('now')
               WHERE id = ?`
           )
-          .bind(p.name, p.note, p.gmapsUrl, p.placeId, p.savedAt, p.id)
+          .bind(p.name, p.note, p.address, p.gmapsUrl, p.placeId, p.savedAt, p.id)
       );
       updated++;
     } else {
@@ -103,8 +104,8 @@ export async function applySync(
         env.DB
           .prepare(
             `INSERT INTO places
-               (id, cid_number, name, lat, lng, note, gmaps_url, place_id, needs_review, saved_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+               (id, cid_number, name, lat, lng, note, address, gmaps_url, place_id, needs_review, saved_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .bind(
             p.id,
@@ -113,6 +114,7 @@ export async function applySync(
             p.lat,
             p.lng,
             p.note,
+            p.address,
             p.gmapsUrl,
             p.placeId,
             p.needsReview ? 1 : 0,
