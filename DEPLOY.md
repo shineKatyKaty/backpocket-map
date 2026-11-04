@@ -105,14 +105,52 @@ Google Cloud Console → 認証情報 → ブラウザキーの「ウェブサ�
 
 ## C. iPhone ショートカット（同期の入口）
 
-Worker 本番化後に作成。要点だけ:
-1. ショートカットで共有リストの `getlist` 応答を取得（iPhoneの回線で）。
-2. それを本文に、`https://backpocket-map-api.xxx.workers.dev/sync` へ **POST**。
-   - ヘッダ `X-Sync-Secret: <A-4のSYNC_SECRET>`、`Content-Type: text/plain`。
-3. オートメーション「Googleマップを閉じたとき」で起動、アプリ内の「今すぐ同期」からも呼べるように。
-> `/sync` は Access を通さず Service Token かパス除外で通す（A-7 の注意）。
+共有リストの `getlist` 応答を iPhone の回線で取得し、本番 `/sync` に POST する。
+（Worker は本文をそのまま生データとして解析し、新規分に Gemini でタグを付ける）
 
-同期が通ると `/places` に場所が増え、新規分は Gemini がタグ付けする。
+### 事前に用意するもの
+- **getlist の取得URL**：共有リストを開いたときに内部で呼ばれる
+  `.../maps/preview/entitylist/getlist?...` のURL。最初の検証で使ったものを再利用。
+  （再取得する場合：PCのChromeで共有リストを開く→F12→Networkタブ→`getlist`で絞り込み→
+  リロード→該当リクエストを右クリック→Copy→Copy URL）
+- **SYNC_SECRET**：`wrangler secret put SYNC_SECRET` で登録した値
+- **Worker URL**：`https://backpocket-map-api.shinshinkaty.workers.dev`
+
+### ショートカットの中身（Shortcuts アプリで新規作成）
+名前：例「保存マップ同期」
+
+1. **URLの内容を取得**（Get Contents of URL）
+   - URL：用意した **getlist の取得URL**
+   - 方法：GET
+   - （もし空やエラーになる場合のみ、ヘッダに `User-Agent: Mozilla/5.0` を足す）
+2. **入力からテキストを取得**（Get Text from Input）
+   - 入力：手順1の「URLの内容」
+   - ※ getlist応答は先頭に `)]}'` が付く“JSONもどき”なので、ここで必ずテキスト化する
+3. **URLの内容を取得**（Get Contents of URL）
+   - URL：`https://backpocket-map-api.shinshinkaty.workers.dev/sync`
+   - 方法：POST
+   - ヘッダ：
+     - `X-Sync-Secret` = あなたの SYNC_SECRET
+     - `Content-Type` = `text/plain`
+   - 本文：**テキスト** を選び、手順2の「テキスト」を挿入
+4. **通知を表示**（Show Notification）
+   - 内容：手順3の「URLの内容」（`{"ok":true,"added":..,"updated":..,"archived":..}` が出れば成功）
+
+### 自動実行（オートメーション）
+- Shortcuts →「オートメーション」→ 個人用を作成 → **App** → アプリに「Googleマップ」、
+  タイミング「**閉じたとき**」→ この「保存マップ同期」を実行 →「実行の前に尋ねる」をオフ。
+
+### アプリから「今すぐ同期」（任意）
+- フロントに `shortcuts://run-shortcut?name=保存マップ同期` へのリンクを置けば、
+  アプリ内ボタンからショートカットを起動できる（iOSのみ）。
+
+### 確認
+同期が通ると本番 `/places` に場所が増え、新規分は `tags` が付く：
+```bash
+curl https://backpocket-map-api.shinshinkaty.workers.dev/places
+curl https://backpocket-map-api.shinshinkaty.workers.dev/sync/last
+```
+> 注意：`/sync` に Access をかけるとショートカットが弾かれる。Access は Pages 側だけに。
 
 ---
 
