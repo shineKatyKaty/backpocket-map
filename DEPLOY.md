@@ -55,13 +55,9 @@ curl https://backpocket-map-api.<サブドメイン>.workers.dev/places
 `/health` が `{"ok":true,...}`、`/places` が `{"places":[],"count":0}`（まだ空）ならOK。
 
 ### A-7. Cloudflare Access で本人のみに制限 【要あなたの操作】
-単一ユーザー用の保護。Cloudflare ダッシュボード → Zero Trust → Access → Applications →
-Add an application → Self-hosted。
-- Application domain: 上の workers.dev のホスト名
-- Policy: Allow / 自分のメールアドレス（`shinshinkaty@gmail.com`）のみ
-保存すると、ブラウザからのアクセスにメール認証（ワンタイムコード）が入る。
-> 注意: `/sync` は iPhone ショートカットから叩くので、**Access のバイパス**（Service Token か、
-> `/sync` パスを除外するポリシー）が必要。ショートカット作成時（C節）に合わせて設定する。
+**保護は「Pages（フロント）」だけに掛ける。APIワーカーには掛けない**
+（掛けると iPhone の `/sync` とフロントのAPI取得が壊れる）。手順は B 節のあと、
+下記 **E. Pages を Access で保護** を参照。
 
 ---
 
@@ -159,6 +155,27 @@ curl https://backpocket-map-api.shinshinkaty.workers.dev/sync/last
 - 仕様変更で取得が壊れたら、本物の `getlist` 応答を `worker/test/fixture.txt` に入れて
   `npm test` → ずれていれば `worker/src/parse.ts` の `ENTRY_INDEX` を調整。
 - 以後は main にマージするたび Pages が自動で再デプロイ（Worker は `wrangler deploy` を手動 or CIで）。
+
+## E. Pages を Access で保護（自分だけ開ける）
+
+`backpocket-map.pages.dev` にログイン保護を掛ける。APIワーカーには掛けない。
+
+1. ダッシュボード左メニュー **Zero Trust** を開く（初回はチーム名を決めて Free プランを選択）。
+2. **Settings → Authentication → Login methods** に **One-time PIN**（メールOTP）があることを確認
+   （無ければ追加）。これで「メールに届くコードでログイン」になる。
+3. **Access → Applications → Add an application → Self-hosted**。
+4. サブタイプ **パブリックDNS（Public hostname）** を選び、
+   - Application name：`保存マップ`
+   - Session Duration：`1 week`（長めにすると再ログインが減る）
+   - Application domain / Public hostname：`backpocket-map.pages.dev`
+5. **ポリシー**：
+   - Policy name：`myself`／Action：`Allow`
+   - Include：Selector **Emails** ＝ `shinshinkaty@gmail.com`
+6. 残りはデフォルトで「次へ／保存」。
+7. 確認：シークレットウィンドウで `https://backpocket-map.pages.dev` を開く→Cloudflareの
+   ログイン画面→メール入力→届いたコードを入力→アプリが開く。自分以外は弾かれる。
+
+> ショートカットは Worker を直接叩くので Access の影響を受けず、同期は動き続ける。
 
 ## トラブルシュート
 - フロントが「サンプル」のまま → `VITE_API_BASE` 未設定か、Worker の `ALLOW_ORIGIN` が Pages URL と不一致（CORS）。
