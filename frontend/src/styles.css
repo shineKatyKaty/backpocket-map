@@ -99,9 +99,138 @@ body {
   color: #fff;
 }
 .count {
-  margin-left: auto;
   font-size: 13px;
   color: var(--muted);
+}
+.count-row {
+  margin-top: 2px;
+}
+
+/* ---------- フィルタバー ---------- */
+.filterbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.filter-cats,
+.filter-selects,
+.filter-toggles {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sel {
+  font-size: 13px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--fg);
+}
+.sel:disabled {
+  opacity: 0.5;
+}
+.chip.reset {
+  background: #fff;
+  color: var(--muted);
+  border-style: dashed;
+}
+
+/* ---------- 詳細シートの編集UI ---------- */
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+.edit-row.tags-row {
+  align-items: flex-start;
+}
+.edit-label {
+  width: 64px;
+  flex: 0 0 64px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg-btn {
+  border: none;
+  background: #fff;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--muted);
+  border-left: 1px solid var(--line);
+}
+.seg-btn:first-child {
+  border-left: none;
+}
+.seg-btn.on {
+  background: var(--accent);
+  color: #fff;
+}
+.dur-input,
+.tag-input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 14px;
+  width: 90px;
+}
+.tag-input {
+  width: 140px;
+}
+.unit {
+  color: var(--muted);
+  font-size: 13px;
+}
+.tag-edit {
+  flex: 1 1 auto;
+}
+.tag.removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag-x {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+}
+.tag-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* ---------- リスト行の距離・移動時間 ---------- */
+.row-dist {
+  color: var(--muted);
+}
+.row-travel {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------- 現在地マーカー ---------- */
+.here-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.4);
 }
 
 /* ---------- 本体: リスト + 地図 ---------- */
@@ -332,7 +461,7 @@ body {
     bottom: 0;
     width: auto;
     flex: none;
-    height: calc(100% - var(--topbar-h));
+    height: 70vh;
     background: var(--bg);
     border-right: none;
     border-top-left-radius: 16px;

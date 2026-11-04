@@ -1,29 +1,14 @@
 import type { DataSource } from '../types';
 
-export interface Filters {
-  onlyHigh: boolean;
-  onlyUnvisited: boolean;
-}
-
 interface Props {
   query: string;
   onQuery: (v: string) => void;
   count: number;
   total: number;
   source: DataSource;
-  filters: Filters;
-  onFilters: (f: Filters) => void;
 }
 
-export default function SearchBar({
-  query,
-  onQuery,
-  count,
-  total,
-  source,
-  filters,
-  onFilters,
-}: Props) {
+export default function SearchBar({ query, onQuery, count, total, source }: Props) {
   return (
     <div className="searchbar">
       <div className="search-row">
@@ -41,19 +26,7 @@ export default function SearchBar({
           </button>
         )}
       </div>
-      <div className="chips">
-        <button
-          className={`chip ${filters.onlyHigh ? 'on' : ''}`}
-          onClick={() => onFilters({ ...filters, onlyHigh: !filters.onlyHigh })}
-        >
-          興味度 高のみ
-        </button>
-        <button
-          className={`chip ${filters.onlyUnvisited ? 'on' : ''}`}
-          onClick={() => onFilters({ ...filters, onlyUnvisited: !filters.onlyUnvisited })}
-        >
-          未訪問のみ
-        </button>
+      <div className="count-row">
         <span className="count">
           {count}/{total} 件
           {source === 'sample' && <span className="badge sample">サンプル</span>}

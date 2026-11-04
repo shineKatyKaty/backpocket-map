@@ -6,6 +6,7 @@
  * 手動値 (interest / duration_manual / visited / 手動タグ) は一切触らない。
  */
 import type { Env, ParsedPlace } from './types';
+import { durationFor, generateTags, loadVocabulary, type TagInput } from './tags';
 
 export interface SyncResult {
   added: number;
@@ -72,6 +73,7 @@ export async function applySync(
   let added = 0;
   let updated = 0;
   let archived = 0;
+  const newPlaces: TagInput[] = []; // 新規のみ（Geminiタグ付与対象）
 
   const stmts: D1PreparedStatement[] = [];
 
@@ -117,6 +119,7 @@ export async function applySync(
             p.savedAt
           )
       );
+      newPlaces.push({ id: p.id, name: p.name, note: p.note });
       added++;
     }
     // リスト所属（多対多）
@@ -149,6 +152,41 @@ export async function applySync(
   );
 
   await env.DB.batch(stmts);
+
+  // 新規場所に Gemini でタグを自動付与し、所要時間の既定値を入れる。
+  // キー未設定・失敗時は空（タグ無しで続行）。手動値は触らない。
+  if (newPlaces.length > 0) {
+    try {
+      const vocab = await loadVocabulary(env);
+      const assignments = await generateTags(env, vocab, newPlaces);
+      const tagStmts: D1PreparedStatement[] = [];
+      for (const [placeId, a] of assignments) {
+        const tagIds: number[] = [];
+        if (a.big && vocab.bigId[a.big] != null) tagIds.push(vocab.bigId[a.big]);
+        for (const s of a.smalls) if (vocab.smallId[s] != null) tagIds.push(vocab.smallId[s]);
+        for (const tid of tagIds) {
+          tagStmts.push(
+            env.DB
+              .prepare(
+                `INSERT OR IGNORE INTO place_tags (place_id, tag_id, source) VALUES (?, ?, 'auto')`
+              )
+              .bind(placeId, tid)
+          );
+        }
+        const dur = durationFor(a.big, a.smalls);
+        if (dur != null) {
+          tagStmts.push(
+            env.DB
+              .prepare(`UPDATE places SET duration_auto = ? WHERE id = ? AND duration_auto IS NULL`)
+              .bind(dur, placeId)
+          );
+        }
+      }
+      if (tagStmts.length > 0) await env.DB.batch(tagStmts);
+    } catch {
+      // タグ付与の失敗は同期全体を失敗させない
+    }
+  }
 
   const total =
     (await env.DB.prepare(`SELECT COUNT(*) AS c FROM places WHERE archived = 0`).first<{ c: number }>())
