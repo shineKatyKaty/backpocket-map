@@ -7,7 +7,7 @@ export interface Env {
   ALLOW_ORIGIN: string;
   /** Gemini API キー（タグ自動生成）。未設定ならタグ生成はスキップ */
   GEMINI_API_KEY?: string;
-  /** Gemini モデル名（任意）。既定 gemini-2.0-flash-lite */
+  /** Gemini モデル名（任意）。既定 gemini-3.5-flash-lite */
   GEMINI_MODEL?: string;
   /** Google Routes API キー（移動時間）。未設定なら /routes は 503 */
   ROUTES_API_KEY?: string;

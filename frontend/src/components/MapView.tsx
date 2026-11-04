@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   APIProvider,
   Map,
@@ -60,6 +60,21 @@ function Markers({
     });
   }, []);
 
+  // キーごとに ref コールバックを安定化（インライン関数だと毎レンダリング
+  // 張り替わり、React が ref を null→node で呼び直して無限ループになる）。
+  const refCallbacks = useRef(new globalThis.Map<string, (m: Marker | null) => void>());
+  const getRef = useCallback(
+    (key: string) => {
+      let cb = refCallbacks.current.get(key);
+      if (!cb) {
+        cb = (m: Marker | null) => setRef(m, key);
+        refCallbacks.current.set(key, cb);
+      }
+      return cb;
+    },
+    [setRef]
+  );
+
   useEffect(() => {
     if (!map || !selectedId) return;
     const p = places.find((x) => x.id === selectedId);
@@ -77,7 +92,7 @@ function Markers({
             <AdvancedMarker
               key={p.id}
               position={{ lat: p.lat!, lng: p.lng! }}
-              ref={(m) => setRef(m, p.id)}
+              ref={getRef(p.id)}
               onClick={() => onSelect(p.id)}
               zIndex={active ? 10 : undefined}
               title={p.name}

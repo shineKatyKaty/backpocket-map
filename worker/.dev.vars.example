@@ -7,8 +7,9 @@ SYNC_SECRET=change-me-to-a-long-random-string
 
 # Gemini API キー（Google AI Studio）。新規場所のタグ自動生成に使う。
 GEMINI_API_KEY=your-gemini-api-key
-# 使用モデル（任意）。未設定なら gemini-2.0-flash-lite
-GEMINI_MODEL=gemini-2.0-flash-lite
+# 使用モデル（任意）。未設定なら gemini-3.5-flash-lite
+# （gemini-2.0-flash-lite は提供終了。古い値が残っていたら消すか新モデルに）
+GEMINI_MODEL=gemini-3.5-flash-lite
 
 # Google Routes API 用キー（移動時間の算出に使う）。
 # Maps と同じプロジェクトのキーでよいが、サーバから呼ぶので

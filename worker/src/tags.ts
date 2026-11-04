@@ -153,7 +153,7 @@ export async function generateTags(
   places: TagInput[]
 ): Promise<Map<string, TagAssignment>> {
   if (!env.GEMINI_API_KEY || places.length === 0) return new Map();
-  const model = env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+  const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
   const prompt = buildTagPrompt(vocab, places);
   try {
     const res = await fetch(
